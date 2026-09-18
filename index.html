@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apri HTML</title>
+
+<!-- PWA / iOS home screen setup -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Apri HTML">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='63' font-size='42' text-anchor='middle' fill='white' font-family='Arial'%3E%3C/%3E%3C/text%3E%3C/svg%3E">
+
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-elevated: #1e293b;
+    --accent: #38bdf8;
+    --text: #f1f5f9;
+    --text-dim: #94a3b8;
+    --border: #334155;
+    --danger: #f87171;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    overscroll-behavior: none;
+  }
+
+  #app {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- Home / picker screen --- */
+  #home {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    padding-top: calc(24px + env(safe-area-inset-top));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    text-align: center;
+  }
+
+  #home .icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 30px;
+  }
+
+  #home h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  #home p {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 0 0 28px;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+
+  .btn {
+    appearance: none;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #05202e;
+    cursor: pointer;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .btn:active { opacity: 0.8; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    margin-top: 10px;
+  }
+
+  #recent {
+    margin-top: 22px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  #recent .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    width: 100%;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .recent-item .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  input[type="file"] { display: none; }
+
+  #error {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--danger);
+    max-width: 280px;
+    display: none;
+  }
+
+  /* --- Viewer screen --- */
+  #viewer {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #viewer.active { display: flex; }
+  #home.hidden { display: none; }
+
+  #toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #toolbar .filename {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+
+  #frame-wrap {
+    flex: 1;
+    position: relative;
+    background: white;
+  }
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="home">
+    <div class="icon">📄</div>
+    <h1>Apri HTML</h1>
+    <p>Seleziona un file HTML dal tuo iPhone per visualizzarlo, ad esempio la piattaforma studio inviata dalla scuola.</p>
+
+    <button class="btn" id="pickBtn">Apri file HTML</button>
+
+    <div id="error"></div>
+
+    <div id="recent" style="display:none;">
+      <div class="label">Aperti di recente</div>
+      <div id="recentList"></div>
+    </div>
+  </div>
+
+  <div id="viewer">
+    <div id="toolbar">
+      <button class="icon-btn" id="backBtn">‹ File</button>
+      <div class="filename" id="filenameLabel"></div>
+      <button class="icon-btn" id="reloadBtn">↻</button>
+    </div>
+    <div id="frame-wrap">
+      <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<input type="file" id="fileInput" accept=".html,.htm,text/html">
+
+<script>
+(function () {
+  const homeEl = document.getElementById('home');
+  const viewerEl = document.getElementById('viewer');
+  const pickBtn = document.getElementById('pickBtn');
+  const fileInput = document.getElementById('fileInput');
+  const errorEl = document.getElementById('error');
+  const frame = document.getElementById('frame');
+  const filenameLabel = document.getElementById('filenameLabel');
+  const backBtn = document.getElementById('backBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const recentWrap = document.getElementById('recent');
+  const recentList = document.getElementById('recentList');
+
+  const RECENTS_KEY = 'apri-html-recents';
+  let lastHtml = null;
+  let lastName = null;
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+
+  function clearError() {
+    errorEl.style.display = 'none';
+  }
+
+  function getRecents() {
+    try {
+      return JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRecent(name) {
+    try {
+      let list = getRecents().filter(n => n !== name);
+      list.unshift(name);
+      list = list.slice(0, 5);
+      localStorage.setItem(RECENTS_KEY, JSON.stringify(list));
+      renderRecents();
+    } catch (e) { /* storage may be unavailable, ignore */ }
+  }
+
+  function renderRecents() {
+    const list = getRecents();
+    if (!list.length) {
+      recentWrap.style.display = 'none';
+      return;
+    }
+    recentWrap.style.display = 'block';
+    recentList.innerHTML = '';
+    list.forEach(name => {
+      const div = document.createElement('div');
+      div.className = 'recent-item';
+      div.innerHTML = '<span>📄</span><span class="name"></span>';
+      div.querySelector('.name').textContent = name;
+      div.addEventListener('click', () => {
+        showError('');
+        clearError();
+        showError('Per riaprire questo file, selezionalo di nuovo: iOS non permette di salvare il contenuto tra le sessioni per motivi di privacy.');
+      });
+      recentList.appendChild(div);
+    });
+  }
+
+  function openHtml(text, name) {
+    // Blob URL keeps the document properly sandboxed and handles
+    // large files / relative asset references better than data: URIs.
+    const blob = new Blob([text], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+
+    lastHtml = text;
+    lastName = name;
+
+    frame.src = url;
+    filenameLabel.textContent = name || 'File HTML';
+
+    homeEl.classList.add('hidden');
+    viewerEl.classList.add('active');
+
+    saveRecent(name || 'file.html');
+  }
+
+  function readFile(file) {
+    clearError();
+
+    if (!file) return;
+
+    const nameOk = /\.(html?|htm)$/i.test(file.name) || file.type === 'text/html';
+    if (!nameOk) {
+      showError('Seleziona un file .html o .htm.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        openHtml(e.target.result, file.name);
+      } catch (err) {
+        showError('Impossibile aprire il file: ' + err.message);
+      }
+    };
+    reader.onerror = function () {
+      showError('Errore durante la lettura del file. Riprova.');
+    };
+    reader.readAsText(file);
+  }
+
+  pickBtn.addEventListener('click', () => {
+    clearError();
+    fileInput.value = '';
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    readFile(file);
+  });
+
+  backBtn.addEventListener('click', () => {
+    viewerEl.classList.remove('active');
+    homeEl.classList.remove('hidden');
+    frame.src = 'about:blank';
+  });
+
+  reloadBtn.addEventListener('click', () => {
+    if (lastHtml) {
+      openHtml(lastHtml, lastName);
+    }
+  });
+
+  renderRecents();
+})();
+</script>
+
+</body>
+</html>
